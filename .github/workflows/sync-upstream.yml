@@ -1,0 +1,61 @@
+name: Sync Upstream Repositories
+
+on:
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up git config
+        run: |
+          git config --global user.name "ronardnx"
+          git config --global user.email "dragosh.rotaru.dragosh@gmail.com"
+
+      - name: Sync repositories
+        env:
+          SYNC_PAT: ${{ secrets.SYNC_PAT }}
+        run: |
+          cat << 'SCRIPT' > sync.sh
+          #!/bin/bash
+          set -e
+
+          REPOS=(
+            "penguin_frameworks_native|Project-PenguinOS/android_frameworks_native|celerity"
+            "penguin_frameworks_av|Project-PenguinOS/frameworks_av|celerity"
+            "penguin_packages_apps_Launcher3|Project-PenguinOS/packages_apps_Launcher3|celerity"
+            "penguin_packages_apps_Settings|Project-PenguinOS/packages_apps_Settings|celerity"
+            "penguin_frameworks_base|Project-PenguinOS/frameworks_base|celerity"
+          )
+
+          for item in "${REPOS[@]}"; do
+            IFS="|" read -r my_repo up_repo branch <<< "$item"
+            echo "=============================================="
+            echo "Processing $my_repo from $up_repo ($branch)..."
+            echo "=============================================="
+
+            rm -rf repo_dir
+            git clone --branch "$branch" "https://x-access-token:${SYNC_PAT}@github.com/clo-for-giulia/${my_repo}.git" repo_dir
+            cd repo_dir
+
+            git remote add upstream "https://github.com/${up_repo}.git"
+            git fetch upstream "$branch"
+
+            echo "Attempting merge..."
+            msg="Merge branch 'upstream/$branch' of https://github.com/${up_repo} into $branch"
+            if git merge --no-edit -m "$msg" "upstream/$branch"; then
+              echo "Merge successful, pushing..."
+              git push origin "$branch"
+              echo "Successfully synced $my_repo!"
+            else
+              echo "CONFLICT occurred in $my_repo!"
+              git status
+              git merge --abort
+            fi
+
+            cd ..
+            rm -rf repo_dir
+          done
+          SCRIPT
+          chmod +x sync.sh
+          ./sync.sh
