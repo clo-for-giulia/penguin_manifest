@@ -25,7 +25,7 @@
 
   <!-- Frameworks -->
   <remove-project name="AOSPA/android_frameworks_av" />
-  <project path="frameworks/av" name="clo-for-giulia/penguin_frameworks_av" remote="penguin" revision="celerity" />
+  <project path="frameworks/av" name="Project-PenguinOS/frameworks_av" remote="penguin" revision="celerity" />
   <remove-project name="AOSPA/android_frameworks_base" />
   <project path="frameworks/base" name="clo-for-giulia/penguin_frameworks_base" remote="penguin" revision="celerity" />
   <remove-project name="platform/frameworks/libs/systemui" />
